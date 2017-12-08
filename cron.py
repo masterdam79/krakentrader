@@ -39,10 +39,10 @@ with urllib.request.urlopen("https://api.kraken.com/0/public/Ticker?pair=" + pai
     cryptobidprice = float(data['result'][pair]['b'][0])
 
 if lastcryptobalance and lastcryptobalancefloat != 0:
-    print("You have " + crypto + " balance, you want to check if the value is lower and possibly sell")
+    print("You have " + crypto + " balance (" + str(lastcryptobalancefloat) + "), you want to check if the value is lower and possibly sell")
     nolastcryptobalance = False
 
-    c.execute('SELECT ask FROM '+crypto.lower()+' ORDER BY date LIMIT 1')
+    c.execute('SELECT ask FROM '+crypto.lower()+' ORDER BY date DESC LIMIT 1')
     lastcryptoaskprice = float(c.fetchone()[0])
 
     if cryptobidprice > lastcryptoaskprice:
@@ -51,17 +51,34 @@ if lastcryptobalance and lastcryptobalancefloat != 0:
     else:
         print("Current " + crypto + " bid price (" + str(cryptobidprice) + ") is lower than the price that you bought (ask) it for (" + str(lastcryptoaskprice) + ")")
         print("Would probably sell")
-        c.execute("INSERT INTO "+crypto.lower()+" VALUES ('" + now + "', 0," + str(cryptoaskprice) + "," + str(cryptobidprice) + ")")
+        c.execute("INSERT INTO " + crypto.lower() + " VALUES ('" + now + "', 0," + str(cryptoaskprice) + "," + str(cryptobidprice) + ")")
         fiatvalue = lastcryptobalancefloat * cryptobidprice
-        c.execute("INSERT INTO "+fiat.lower()+" VALUES ('" + now + "', " + str(fiatvalue) + "," + str(cryptoaskprice) + "," + str(cryptobidprice) + ")")
+        c.execute("INSERT INTO " + fiat.lower() + " VALUES ('" + now + "', " + str(fiatvalue) + "," + str(cryptoaskprice) + "," + str(cryptobidprice) + ")")
         conn.commit()
+        print("Selling " + str(lastcryptobalancefloat) + " " + crypto + " for " + str(cryptobidprice) + " " + fiat)
         sys.exit()
 else:
     nolastcryptobalance = True
 
 if lastfiatbalance and lastfiatbalancefloat != 0:
-    print("You have " + fiat + " balance, you want to check if the value is higher and possibly buy")
+    print("You have " + fiat + " balance (" + str(lastfiatbalancefloat) + "), you want to check if the value is higher and possibly buy")
     nolastfiatbalance = False
+
+    c.execute('SELECT bid FROM '+fiat.lower()+' ORDER BY date DESC LIMIT 1')
+    lastfiatbidprice = float(c.fetchone()[0])
+
+    if cryptoaskprice > lastfiatbidprice:
+        print("Current " + crypto + " ask price (" + str(cryptoaskprice) + ") is higher than the price that you sold (bid) it for (" + str(lastfiatbidprice) + ")")
+        print("Would probably buy")
+        c.execute("INSERT INTO " + fiat.lower() +  " VALUES ('" + now + "', 0," + str(cryptoaskprice) + "," + str(cryptobidprice) + ")")
+        cryptobalance = lastfiatbalancefloat / cryptoaskprice
+        c.execute("INSERT INTO " + crypto.lower() + " VALUES ('" + now + "', " + str(cryptobalance) + "," + str(cryptoaskprice) + "," + str(cryptobidprice) + ")")
+        conn.commit()
+        print("Buying " + str(cryptobalance) + " " + crypto + " for " + str(lastfiatbalancefloat) + " " + fiat)
+        sys.exit()
+    else:
+        print("Current " + crypto + " ask price (" + str(cryptoaskprice) + ") is lower than the price that you sold (bid) it for (" + str(lastfiatbidprice) + ")")
+        print("Would probably keep")
 else:
     nolastfiatbalance = True
 
