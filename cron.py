@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 
-import urllib.request, json, sqlite3, datetime, sys
+import urllib.request, json, sqlite3, datetime, sys, configparser
 
-crypto = "LTC"
-fiat = "EUR"
+config = configparser.ConfigParser()
+config.read('./config.txt')
+crypto = config['CURRENCIES']['CRYPTO']
+fiat = config['CURRENCIES']['FIAT']
 pair = "X" + crypto + "Z" + fiat
+
+print(pair)
+
 today = str(datetime.date.today())
 now = str(datetime.datetime.now())
 

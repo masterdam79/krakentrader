@@ -23,6 +23,12 @@ This is on purpose because the script assumes that the overall value will increa
 
 ## Dependencies
 * Python & SQLite
+* config.txt file in this directory containing the currencies you want to trade containing:
+```
+[CURRENCIES]
+CRYPTO = LTC
+FIAT = EUR
+```
 
 ### How to install on Ubuntu
 ```
